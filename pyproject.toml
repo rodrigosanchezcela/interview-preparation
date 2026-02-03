@@ -1,0 +1,29 @@
+[project]
+name = "interview-prep"
+version = "0.1.0"
+description = "A comprehensive tool to help prepare for technical interviews"
+readme = "README.md"
+authors = [
+    { name = "Rodrigo Sanchez Cela", email = "rodrigo.sanchezcela@wavestone.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.128.0",
+    "langchain>=1.2.8",
+    "langchain-openai>=1.1.7",
+    "pydantic-ai>=1.52.0",
+    "streamlit>=1.53.1",
+    "uvicorn>=0.40.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+]
+
+[project.scripts]
+interview-prep = "interview_prep:main"
+
+[build-system]
+requires = ["uv_build>=0.9.8,<0.10.0"]
+build-backend = "uv_build"
