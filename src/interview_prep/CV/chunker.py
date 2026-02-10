@@ -1,9 +1,19 @@
 
 from interview_prep.schemas.cv_schema import Document, CVChunk
 from constants import CV_SECTION_HEADERS, TECHNICAL_SKILLS
+import json
+from config import config
+from pathlib import Path
+from typing import List
+import os
+import sys
+
 
 class CVChunker:
     """Class to chunk CVs into small items."""
+    def __init__(self):
+        self.chunks: List[CVChunk] = []
+        self.document: Document | None = None
 
     def _retrieve_sections(self, document: Document) -> list[dict]:
         """Retrieve sections from a CV document based on common section headers.
@@ -12,6 +22,7 @@ class CVChunker:
         Return:
             list[dict]: A list of sections with their content and line numbers.
         """
+        self.document = document
         sections = []
         section_id = 0
 
@@ -23,7 +34,7 @@ class CVChunker:
         content_buffer = []
         lines_buffer = []
 
-        for i, line in enumerate(document.normalized_text.split("\n")):
+        for i, line in enumerate(self.document.normalized_text.split("\n")):
             if line.strip() == "":
                 continue
 
@@ -55,7 +66,6 @@ class CVChunker:
             section["id"] = section_id
             sections.append(section)
             
-
         return sections
     
     def chunk_sections(self, sections: list[dict]) -> list[CVChunk]:
@@ -121,5 +131,81 @@ class CVChunker:
                                   location=section["lines"][i]))
                     chunk_id += 1
                     continue
-
+        
+        self.chunks = chunks
         return chunks
+    
+    def save_chunks(self, output_dir: Path | None = None):
+        """Save chunks to JSON file.
+        
+        Args:
+            output_dir: Optional custom output directory. Defaults to config.processed_data_dir/CVs
+        """
+        if not self.chunks:
+            print("No chunks to save")
+            return
+        
+        if not self.document:
+            print("No document loaded")
+            return
+
+        if output_dir is None:
+            output_dir = config.processed_data_dir / "CVs"
+        
+        Path.mkdir(output_dir, parents=True, exist_ok=True)
+        
+        # Get filename from document source
+        source_filename = self.document.filename
+        output_file = output_dir / f"{source_filename}_chunks.json"
+        
+        chunks_data = [chunk.model_dump() for chunk in self.chunks]
+        
+        with open(output_file, 'w') as f:
+            json.dump(chunks_data, f, indent=2)
+        
+        print(f"Saved {len(self.chunks)} chunks to {output_file}")
+
+    def select_chunks_for_embedding(self, chunk_types: List[str] = None) -> List[CVChunk]:
+        """Select CV chunks for embedding based on chunk_type.
+        
+        Args:
+            chunk_types: List of chunk types to include. Defaults to ["ITEM"]
+        
+        Returns:
+            List of selected chunks
+        """
+        if not self.chunks:
+            return []
+        
+        if chunk_types is None:
+            chunk_types = ["ITEM"]
+        
+        selected = [chunk for chunk in self.chunks if chunk.chunk_type in chunk_types]
+        
+        print(f"Selected {len(selected)} chunks (types: {chunk_types}) out of {len(self.chunks)} total")
+        return  selected
+
+    def process_cv(self, document: Document, save: bool = True) -> List[CVChunk]:
+        """Complete pipeline: retrieve sections, chunk, and optionally save.
+        
+        Args:
+            document: CV document to process
+            save: Whether to save chunks to file
+            
+        Returns:
+            List of CV chunks
+        """
+        sections = self._retrieve_sections(document)
+        chunks = self.chunk_sections(sections)
+        
+        if save:
+            self.save_chunks()
+        
+        return chunks
+
+    def reset(self):
+        """Reset state for processing a new CV."""
+        self.chunks = []
+        self.document = None
+
+

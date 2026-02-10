@@ -33,9 +33,8 @@ class CVReader:
     
         #for caching purpose
         file_name = pdf_path.stem
-        text_file = file_name + ".txt"
-        print("file name : ", file_name)
-        print("text file name : ", text_file)
+        structured_data["filename"] = file_name
+
         if not pdf_path.exists():
             raise FileNotFoundError(f"The file {file_path} does not exist.")
         

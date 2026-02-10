@@ -69,6 +69,46 @@ def normalize_chunk_text(text: str) -> str:
     # Safe at chunk-level: collapse whitespace inside a chunk
     return re.sub(r"\s+", " ", text).strip()
 
+def clean_text_for_embedding(text: str) -> str:
+    """Clean text specifically for embedding generation.
+    
+    Removes:
+    - Bullet points (•, ◦, ▪, –, ―, -, *)
+    - Excessive whitespace
+    - Special characters that don't add semantic meaning
+    - Leading/trailing punctuation
+    
+    Args:
+        text: Raw text to clean
+        
+    Returns:
+        Cleaned text suitable for embedding
+    """
+    # Remove bullet point markers at the start
+    text = re.sub(r'^[\s•◦▪–―\-\*]+', '', text)
+    
+    # Remove multiple bullet points within text
+    text = re.sub(r'[\s•◦▪]+', ' ', text)
+    
+    # Replace special dashes with regular hyphens
+    text = re.sub(r'[–―]', '-', text)
+    
+    # Collapse multiple spaces
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Remove leading/trailing whitespace
+    text = text.strip()
+    
+    # Remove trailing incomplete sentences (ends with comma/semicolon/colon but no period)
+    # This catches cases like "Awareness of" or "such as"
+    if text and text[-1] in ',:;':
+        # Try to find the last complete sentence
+        sentences = re.split(r'[.!?]\s+', text)
+        if len(sentences) > 1:
+            text = '. '.join(sentences[:-1]) + '.'
+    
+    return text
+
 def is_line_header(line: str) -> bool:
     """Determine if a line is a header based on formatting cues."""
     line = line.strip()
