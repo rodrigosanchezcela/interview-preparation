@@ -1,4 +1,3 @@
-from llama_index.readers.file import PDFReader
 from interview_prep.utils.text_tools import normalize_text
 from config import config
 from pathlib import Path
@@ -47,11 +46,8 @@ class CVReader:
             normalized_text = normalize_text(text)
             structured_data["raw_text"] = text
             structured_data["normalized_text"] = normalized_text
-            print(structured_data["raw_text"])
         
         document = Document(**structured_data)
-        
-        print(document.normalized_text)
         return document
 
         

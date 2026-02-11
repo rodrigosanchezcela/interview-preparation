@@ -8,12 +8,13 @@ class Document(BaseModel):
     source: str
 
 class CVChunk(BaseModel):
+    source_document_id: str
     section_id: int
     chunk_id: int
     text: str
     section: Optional[str] = "UNKNOWN"
     chunk_type: str
-    location: int
+    length: int
 
 class JobDescriptionChunk(BaseModel):
     id: int
